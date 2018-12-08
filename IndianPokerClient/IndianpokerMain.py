@@ -135,6 +135,12 @@ class IndianPokerMain(QMainWindow):
         nameLayout.addWidget(self.name)
         nameLayout.addStretch(1)
 
+        #상태창
+        self.enterstatus = QLabel('입장해주세요.')
+        enterstatusLayout = QHBoxLayout()
+        enterstatusLayout.addStretch(1)
+        enterstatusLayout.addWidget(self.enterstatus)
+        enterstatusLayout.addStretch(1)
 
         #닉네임
         self.nicknameLabel = QLabel('닉네임 : ')
@@ -177,6 +183,8 @@ class IndianPokerMain(QMainWindow):
         loginLayout = QVBoxLayout()
         loginLayout.addStretch(1)
         loginLayout.addLayout(nameLayout)
+        loginLayout.addStretch(1)
+        loginLayout.addLayout(enterstatusLayout)
         loginLayout.addStretch(1)
         loginLayout.addLayout(nickNameLayout)
         loginLayout.addLayout(roomNumLayout)
