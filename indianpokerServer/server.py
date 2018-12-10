@@ -14,6 +14,7 @@ class TcpHandler(socketserver.BaseRequestHandler):
         try:
             username = self.registerUsername()
             print('[%s][%s] 연결됨' %(self.client_address[0],username))
+
             while True:
                 msg = self.request.recv(1024)
                 if self.manager.messageHandler(username, msg.decode()) == -1:

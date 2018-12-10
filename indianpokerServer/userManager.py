@@ -12,18 +12,20 @@ class UserManager:
 
     def addUser(self, username, roomnum, conn, addr):
         if username in self.users:
-            conn.send('이미 등록된 사용자입니다.'.encode())
+            conn.send('/id_taken\\'.encode())
             return None
         if roomnum in self.rooms:
             if len(self.rooms[roomnum]) == 1:
-                conn.send("/enter".encode())
+                print(username + " < enter")
+                conn.send("/enter\\".encode())
                 lock.acquire()
                 self.rooms[roomnum] += [username]
                 lock.release()
             else:
-                conn.send("이미 게임중인 방입니다.".encode())
+                conn.send("/room_num_taken\\".encode())
                 return None
         else:
+            print(username + " < enter")
             conn.send("/enter".encode())
             lock.acquire()
             self.rooms[roomnum] = [username]
@@ -33,7 +35,7 @@ class UserManager:
         self.users[username] = (conn, addr, roomnum)
         lock.release()
 
-        self.sendMessage('[%s]님이 입장했습니다.' % username,roomnum)
+        self.sendMessage('/msg [%s]님이 입장했습니다.' % username,roomnum)
         if len(self.rooms[roomnum]) == 2:
             self.sendMessage("/game",roomnum)
 
@@ -57,9 +59,19 @@ class UserManager:
         print(msg)
         if msg.strip() == '/game':
             print(str(roomnum) + "번 방 게임시작")
-            lock.acquire()
-            self.gameManager[roomnum] = Game(self.rooms[roomnum])
-            lock.release()
+            try:
+                tmp = self.gameManager[roomnum]
+            except KeyError:
+                lock.acquire()
+                self.gameManager[roomnum] = Game(self.rooms[roomnum])
+                lock.release()
+            self.users[username][0].send(('/next_turn ' + self.gameManager[roomnum].user_data_json(username)).encode())
+            order = ''
+            if self.gameManager[roomnum].get_attack_first() == username:
+                order = '/bet\\'
+            else:
+                order = '/wait_for_bet\\'
+            self.users[username][0].send(order.encode())
             return
 
         if msg.strip() == '/quit':
@@ -69,4 +81,4 @@ class UserManager:
     def sendMessage(self, msg, room):
         for conn, addr, roomnum in self.users.values():
             if room == roomnum:
-                conn.send(msg.encode())
+                conn.send((msg + "\\").encode())

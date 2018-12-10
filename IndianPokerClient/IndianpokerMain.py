@@ -2,19 +2,113 @@
 import sys
 from PyQt5.QtWidgets import (QWidget, QPushButton, QApplication, QLabel,
                              QLineEdit, QHBoxLayout, QVBoxLayout, QStackedLayout, QMainWindow)
+from communication import Communication
+import functools
+import re
+import json
 
 class IndianPokerMain(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
         self.StackedLayout = QStackedLayout()
         self.StackedLayout.addWidget(self.login())
-        self.StackedLayout.addWidget(self.MainUI())
         self.MainWidget = QWidget()
         self.MainWidget.setLayout(self.StackedLayout)
         self.setCentralWidget(self.MainWidget)
 
-    def Cliked(self):
-        self.StackedLayout.setCurrentIndex(1 if self.StackedLayout.currentIndex() == 0 else 0)
+    def ReadMsg(self,msg):
+        m = msg.split('\\')
+        for i in m:
+            msg = i
+            if msg == '':
+                continue
+            elif msg == "/enter":
+                self.StackedLayout.addWidget(self.MainUI())
+                self.MainWidget.setLayout(self.StackedLayout)
+                self.StackedLayout.setCurrentIndex(1 if self.StackedLayout.currentIndex() == 0 else 0)
+            elif msg == "/id_taken":
+                self.enterstatus.setText("닉네임를 사용할 수 없습니다. 이미 사용중인 닉네임입니다.")
+            elif msg == "/room_num_taken":
+                self.enterstatus.setText("방번호를 사용할 수 없습니다. 이미 게임중인 방입니다.")
+            elif msg == "/bet":
+                pass
+                #
+                #
+                #   현재 내 베팅 타임
+                #
+                #
+            elif msg == "/wait_for_bet":
+                pass
+                #
+                #
+                #   상대 베팅 기다리는중
+                #
+                #
+            elif msg == "/game":
+                self.communication.send("/game")
+            else:
+                msg = msg.split()
+                if msg[0] == "/msg":
+                    self.statusbar.setText(msg[1] + msg[2])
+                elif msg[0] == "/next_turn":
+                    self.statusbar.setText("게임 시작")
+                    data = ''.join(msg[1:])
+                    try:
+                        data = json.loads(data)
+                    except Exception as e:
+                        print(e)
+                    for i in data.keys():
+                        if i == self.id:
+                            self.myCard.setText("?")
+                            self.availaleMoney.setText(data[i]["money"])
+                        elif i == "deck_len":
+                            pass
+                        #
+                        #
+                        #  deck 길이
+                        #
+                        #
+                        elif i == "bet":
+                            pass
+                        #
+                        #
+                        #  베팅 정보들
+                        #
+                        #
+                        else:
+                            pass
+                        #
+                        #
+                        #  상대 카드, 상대 돈
+                        #
+                        #
+
+                elif msg[0] == "/result":
+                    pass
+                #
+                #
+                #   결과 확인( 위에 /game 참조)
+                #
+                #
+                elif msg[0] == "/next_turn":
+                    pass
+                #
+                #
+                #   다음 턴
+                #
+                #
+                else:
+                    print(msg[0])
+
+
+
+    def send_Login(self):
+        self.id = self.nickname.text().strip()
+        self.room_num = self.roomNum.text().strip()
+        if re.match('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…》]',self.id) and re.match('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…》]',self.room_num):
+            return None
+        elif len(self.id) > 0 and len(self.room_num) > 0:
+            self.communication = Communication(self.ReadMsg,self.id,self.room_num,HOST=self.urlServer.text())
 
     def MainUI(self):
         self.setGeometry(750, 300, 350, 500)
@@ -33,6 +127,10 @@ class IndianPokerMain(QMainWindow):
         #상태창 표시
         self.statusbar = QLabel('상대방을 기다리는 중입니다.')
         self.acceptBtn = QPushButton('확인')
+        try:
+            self.acceptBtn.clicked.connect(functools.partial(self.communication.send,"/accept"))
+        except AttributeError:
+            pass
 
         statusLayout = QHBoxLayout()
         statusLayout.addStretch(1)
@@ -57,12 +155,14 @@ class IndianPokerMain(QMainWindow):
         betLayout.addStretch(1)
 
         #돈 관련 나타내기
-        self.availaleMoney = QLabel("남은 돈 : 5000")
+        self.availaleMoney_txt = QLabel("남은 돈 : ")
+        self.availaleMoney = QLabel("5000")
         self.betLabel = QLabel("베팅할 금액 :")
         self.betmoney = QLineEdit()
 
         monryLayout = QHBoxLayout()
         monryLayout.addStretch(1)
+        monryLayout.addWidget(self.availaleMoney_txt)
         monryLayout.addWidget(self.availaleMoney)
         monryLayout.addStretch(1)
         monryLayout.addWidget(self.betLabel)
@@ -74,6 +174,14 @@ class IndianPokerMain(QMainWindow):
         self.call = QPushButton("콜")
         self.allin = QPushButton("올인")
         self.die = QPushButton("포기")
+
+        try:
+            self.bet.clicked.connect(functools.partial(self.communication.send,"/bet " + self.betmoney.text()))
+            self.call.clicked.connect(functools.partial(self.communication.send,"/end_turn"))
+            self.allin.clicked.connect(functools.partial(self.communication.send,"/all_in"))
+            self.die.clicked.connect(functools.partial(self.communication.send,"/die"))
+        except AttributeError:
+            pass
 
         BetLayout = QHBoxLayout()
         BetLayout.addWidget(self.bet)
@@ -135,6 +243,12 @@ class IndianPokerMain(QMainWindow):
         nameLayout.addWidget(self.name)
         nameLayout.addStretch(1)
 
+        # 상태창
+        self.enterstatus = QLabel('입장해주세요.')
+        enterstatusLayout = QHBoxLayout()
+        enterstatusLayout.addStretch(1)
+        enterstatusLayout.addWidget(self.enterstatus)
+        enterstatusLayout.addStretch(1)
 
         #닉네임
         self.nicknameLabel = QLabel('닉네임 : ')
@@ -166,7 +280,7 @@ class IndianPokerMain(QMainWindow):
 
         #입장
         self.Enter = QPushButton("입장하기")
-        self.Enter.clicked.connect(self.Cliked)
+        self.Enter.clicked.connect(self.send_Login)
 
         EnterLayout = QHBoxLayout()
         EnterLayout.addStretch(2)
@@ -178,8 +292,11 @@ class IndianPokerMain(QMainWindow):
         loginLayout.addStretch(1)
         loginLayout.addLayout(nameLayout)
         loginLayout.addStretch(1)
+        loginLayout.addLayout(enterstatusLayout)
+        loginLayout.addStretch(1)
         loginLayout.addLayout(nickNameLayout)
         loginLayout.addLayout(roomNumLayout)
+        loginLayout.addWidget(QLabel("         방번호와 닉네임에 특수문자는 불가능(예: !@#$)"))
         loginLayout.addStretch(1)
         loginLayout.addLayout(EnterLayout)
         loginLayout.addStretch(1)
