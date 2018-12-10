@@ -63,10 +63,7 @@ class IndianPokerMain(QMainWindow):
                             self.myCard.setText("?")
                             self.availaleMoney.setText(str(data[i]["money"]))
                         elif i == "deck_len":
-                            if self.num == 2:
-                                self.num = 22
-                            else:
-                                self.num -= 2
+                            self.num = data[i]["deck_len"]
                         elif i == "bet":
                             self.Money -= 500
                             self.totalbet.setText("1000")
@@ -140,8 +137,8 @@ class IndianPokerMain(QMainWindow):
 
         #돈 관련 나타내기
         self.availaleMoney_txt = QLabel("남은 돈 : ")
-        self.availaleMoney = QLabel("%d" %(self.Money))
         self.Money = 10000
+        self.availaleMoney = QLabel("%d" %(self.Money))
         self.betLabel = QLabel("베팅할 금액 :")
         self.betmoney = QLineEdit()
 
@@ -176,7 +173,7 @@ class IndianPokerMain(QMainWindow):
 
 
         #카드 숫자 나타내기
-        self.num = 22
+        self.num = 20
         self.numofCard = QLabel("남은 카드 : %d장" %(self.num))
 
         nowsetting = QHBoxLayout()
