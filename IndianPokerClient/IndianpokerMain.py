@@ -243,7 +243,6 @@ class IndianPokerMain(QMainWindow):
         nameLayout.addWidget(self.name)
         nameLayout.addStretch(1)
 
-        # 상태창
         self.enterstatus = QLabel('입장해주세요.')
         enterstatusLayout = QHBoxLayout()
         enterstatusLayout.addStretch(1)
