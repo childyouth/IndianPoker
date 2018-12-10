@@ -31,19 +31,18 @@ class IndianPokerMain(QMainWindow):
             elif msg == "/room_num_taken":
                 self.enterstatus.setText("방번호를 사용할 수 없습니다. 이미 게임중인 방입니다.")
             elif msg == "/bet":
-                pass
-                #
-                #
-                #   현재 내 베팅 타임
-                #
-                #
+                self.statusbar.setText("배팅해주세요.")
+                self.bet.setEnabled(True)
+                self.call.setEnabled(True)
+                self.allin.setEnabled(True)
+                self.die.setEnabled(True)
+
             elif msg == "/wait_for_bet":
-                pass
-                #
-                #
-                #   상대 베팅 기다리는중
-                #
-                #
+                self.statusbar.setText("상대방이 배팅 중 입니다.")
+                self.bet.setEnabled(False)
+                self.call.setEnabled(False)
+                self.allin.setEnabled(False)
+                self.die.setEnabled(False)
             elif msg == "/game":
                 self.communication.send("/game")
             else:
@@ -52,6 +51,7 @@ class IndianPokerMain(QMainWindow):
                     self.statusbar.setText(msg[1] + msg[2])
                 elif msg[0] == "/next_turn":
                     self.statusbar.setText("게임 시작")
+                    self.acceptBtn.setEnabled(False)
                     data = ''.join(msg[1:])
                     try:
                         data = json.loads(data)
@@ -60,14 +60,12 @@ class IndianPokerMain(QMainWindow):
                     for i in data.keys():
                         if i == self.id:
                             self.myCard.setText("?")
-                            self.availaleMoney.setText(data[i]["money"])
+                            self.availaleMoney.setText(str(data[i]["money"]))
                         elif i == "deck_len":
-                            pass
-                        #
-                        #
-                        #  deck 길이
-                        #
-                        #
+                            if self.num == 2:
+                                self.num = 22
+                            else:
+                                self.num -= 2
                         elif i == "bet":
                             pass
                         #
@@ -76,6 +74,7 @@ class IndianPokerMain(QMainWindow):
                         #
                         #
                         else:
+                            self.opponentCard.setText(data[i]["card"])
                             pass
                         #
                         #
@@ -84,17 +83,10 @@ class IndianPokerMain(QMainWindow):
                         #
 
                 elif msg[0] == "/result":
-                    pass
+                    self.acceptBtn.setEnabled(True)
                 #
                 #
                 #   결과 확인( 위에 /game 참조)
-                #
-                #
-                elif msg[0] == "/next_turn":
-                    pass
-                #
-                #
-                #   다음 턴
                 #
                 #
                 else:
@@ -142,16 +134,16 @@ class IndianPokerMain(QMainWindow):
         #총 금액 및 상대방 배팅 표시
         self.totalbetName = QLabel('총 배팅액 : ')
         self.totalbet = QLabel('0')
-        self.opponentbetName = QLabel('상대방 배 팅: ')
-        self.opponentbet = QLabel('0')
+        self.needbetName = QLabel('필요한 배팅: ')
+        self.needbet = QLabel('0')
 
         betLayout = QHBoxLayout()
         betLayout.addStretch(1)
         betLayout.addWidget(self.totalbetName)
         betLayout.addWidget(self.totalbet)
         betLayout.addStretch(1)
-        betLayout.addWidget(self.opponentbetName)
-        betLayout.addWidget(self.opponentbet)
+        betLayout.addWidget(self.needbetName)
+        betLayout.addWidget(self.needbet)
         betLayout.addStretch(1)
 
         #돈 관련 나타내기
@@ -191,7 +183,8 @@ class IndianPokerMain(QMainWindow):
 
 
         #카드 숫자 나타내기
-        self.numofCard = QLabel("남은 카드 : 2장")
+        self.num = 22
+        self.numofCard = QLabel("남은 카드 : %d장" %(self.num))
 
         nowsetting = QHBoxLayout()
         nowsetting.addStretch(1)
