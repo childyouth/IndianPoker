@@ -43,6 +43,7 @@ class IndianPokerMain(QMainWindow):
                 self.call.setEnabled(False)
                 self.allin.setEnabled(False)
                 self.die.setEnabled(False)
+                self.betmoney.clear()
             elif msg == "/game":
                 self.communication.send("/game")
             else:
@@ -67,20 +68,11 @@ class IndianPokerMain(QMainWindow):
                             else:
                                 self.num -= 2
                         elif i == "bet":
-                            pass
-                        #
-                        #
-                        #  베팅 정보들
-                        #
-                        #
+                            self.Money -= 500
+                            self.totalbet.setText("1000")
                         else:
-                            self.opponentCard.setText(data[i]["card"])
-                            pass
-                        #
-                        #
-                        #  상대 카드, 상대 돈
-                        #
-                        #
+                            self.opponentCard.setText(str(data[i]["card"]))
+
 
                 elif msg[0] == "/result":
                     self.acceptBtn.setEnabled(True)
@@ -148,7 +140,8 @@ class IndianPokerMain(QMainWindow):
 
         #돈 관련 나타내기
         self.availaleMoney_txt = QLabel("남은 돈 : ")
-        self.availaleMoney = QLabel("5000")
+        self.availaleMoney = QLabel("%d" %(self.Money))
+        self.Money = 10000
         self.betLabel = QLabel("베팅할 금액 :")
         self.betmoney = QLineEdit()
 
@@ -193,8 +186,8 @@ class IndianPokerMain(QMainWindow):
 
 
         #카드
-        self.opponentCard = QLabel('1')
-        self.myCard = QLabel('4')
+        self.opponentCard = QLabel('0')
+        self.myCard = QLabel('0')
         font = self.opponentCard.font()
         font.setPointSize(font.pointSize() + 70)
         self.opponentCard.setFont(font)
